@@ -59,7 +59,7 @@ try:
 except ImportError:
     raise ImportError('Require labscript_utils > 2.1.0')
 
-check_version('labscript_utils', '2.2.2', '3')
+check_version('labscript_utils', '2.3', '3')
 check_version('qtutils', '1.5.1', '2')
 check_version('zprocess', '1.1.2', '3')
 check_version('labscript_devices', '2.0', '3')
@@ -288,6 +288,7 @@ class BLACS(object):
         logger.info('Creating tab widgets')
         for i in range(4):
             self.tab_widgets[i] = DragDropTabWidget(self.tab_widget_ids)
+            self.tab_widgets[i].setElideMode(Qt.ElideRight)
             getattr(self.ui,'tab_container_%d'%i).addWidget(self.tab_widgets[i])
 
         logger.info('Instantiating devices')
@@ -351,7 +352,10 @@ class BLACS(object):
                     for child_menu_params in menu_parameters['menu_items']:
                         create_menu(child,child_menu_params)
                 else:
-                    child = parent.addAction(menu_parameters['name'])
+                    if 'icon' in menu_parameters:
+                        child = parent.addAction(QIcon(menu_parameters['icon']), menu_parameters['name'])
+                    else:
+                        child = parent.addAction(menu_parameters['name'])
 
                 if 'action' in menu_parameters:
                     child.triggered.connect(menu_parameters['action'])
