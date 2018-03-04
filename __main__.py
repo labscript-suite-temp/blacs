@@ -10,7 +10,10 @@
 # the project for the full license.                                 #
 #                                                                   #
 #####################################################################
-
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 import logging, logging.handlers
 import os
@@ -29,7 +32,7 @@ try:
         delay = int(sys.argv[sys.argv.index('--delay')+1])
         time.sleep(delay)
 except:
-    print 'You should specify "--delay x" where x is an integer'
+    print('You should specify "--delay x" where x is an integer')
 
 from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
@@ -123,7 +126,7 @@ except Exception:
 
 
 # Connection Table Code
-from connections import ConnectionTable
+from labscript_utils.connections import ConnectionTable
 #Draggable Tab Widget Code
 from labscript_utils.qtwidgets.dragdroptab import DragDropTabWidget
 # Lab config code
@@ -571,11 +574,11 @@ class BLACS(object):
         logger.info('finalise_quit called')
         tab_close_timeout = 2
         # Kill any tabs which didn't close themselves:
-        for name, tab in self.tablist.items():
+        for name, tab in list(self.tablist.items()):
             if tab.destroy_complete:
                 del self.tablist[name]
         if self.tablist:
-            for name, tab in self.tablist.items():
+            for name, tab in list(self.tablist.items()):
                 # If a tab has a fatal error or is taking too long to close, force close it:
                 if (time.time() - initial_time > tab_close_timeout) or tab.state == 'fatal error':
                     try:
@@ -614,7 +617,7 @@ class BLACS(object):
 
 class ExperimentServer(ZMQServer):
     def handler(self, h5_filepath):
-        print h5_filepath
+        print(h5_filepath)
         message = self.process(h5_filepath)
         logger.info('Request handler: %s ' % message.strip())
         return message
@@ -679,8 +682,8 @@ if __name__ == '__main__':
     logger.info('About to load connection table: %s'%exp_config.get('paths','connection_table_h5'))
     connection_table_h5_file = exp_config.get('paths','connection_table_h5')
     try:
-        connection_table = ConnectionTable(connection_table_h5_file)
-    except:
+        connection_table = ConnectionTable(connection_table_h5_file, logging_prefix='BLACS')
+    except Exception:
         # dialog = gtk.MessageDialog(None,gtk.DIALOG_MODAL,gtk.MESSAGE_ERROR,gtk.BUTTONS_NONE,"The connection table in '%s' is not valid. Please check the compilation of the connection table for errors\n\n"%self.connection_table_h5file)
 
         # dialog.run()
