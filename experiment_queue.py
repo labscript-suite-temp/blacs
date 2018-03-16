@@ -30,9 +30,8 @@ zprocess.locking.set_client_process_name('BLACS.queuemanager')
 from qtutils import *
 
 from labscript_utils.qtwidgets.elide_label import elide_label
+from labscript_utils.connections import ConnectionTable
 
-# Connection Table Code
-from blacs.connections import ConnectionTable
 from blacs.tab_base_classes import MODE_MANUAL, MODE_TRANSITION_TO_BUFFERED, MODE_TRANSITION_TO_MANUAL, MODE_BUFFERED  
 
 FILEPATH_COLUMN = 0
@@ -387,8 +386,8 @@ class QueueManager(object):
     def process_request(self,h5_filepath):
         # check connection table
         try:
-            new_conn = ConnectionTable(h5_filepath)
-        except:
+            new_conn = ConnectionTable(h5_filepath, logging_prefix='BLACS')
+        except Exception:
             return "H5 file not accessible to Control PC\n"
         result,error = inmain(self.BLACS.connection_table.compare_to,new_conn)
         if result:
@@ -896,7 +895,7 @@ class QueueManager(object):
             send_to_analysis = True
             for callback in self.get_callbacks('analysis_cancel_send'):
                 try:
-                    if callback(path) is True:
+                    if callback(path):
                         send_to_analysis = False
                         break
                 except Exception:
@@ -919,8 +918,18 @@ class QueueManager(object):
 
             ##########################################################################################################################################
             #                                                        Repeat Experiment?                                                              #
-            ########################################################################################################################################## 
-            if self.manager_repeat:
+            ##########################################################################################################################################
+            # check for repeat Filters in Plugins
+            repeat_shot = self.manager_repeat
+            for callback in self.get_callbacks('shot_ignore_repeat'):
+                try:
+                    if callback(path):
+                        repeat_shot = False
+                        break
+                except Exception:
+                    logger.exception("Plugin callback raised an exception")
+
+            if repeat_shot:
                 if ((self.manager_repeat_mode == self.REPEAT_ALL) or
                     (self.manager_repeat_mode == self.REPEAT_LAST and inmain(self._model.rowCount) == 0)):
                     # Resubmit job to the bottom of the queue:
